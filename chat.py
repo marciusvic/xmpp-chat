@@ -1,4 +1,5 @@
 import xmpp
+import threading
 
 def message_callback(conn, msg):
     print(f"Mensagem recebida de {msg.getFrom()}: {msg.getBody()}")
@@ -7,6 +8,10 @@ def send_message(conn, recipient, message):
     msg = xmpp.Message(recipient, message)
     msg.setAttr('type', 'chat')
     conn.send(msg)
+
+def listen_for_messages(client):
+    while True:
+        client.Process(1)
 
 def main():
     jid = xmpp.protocol.JID('admin@localhost')
@@ -26,8 +31,12 @@ def main():
     client.RegisterHandler('message', message_callback)
     client.sendInitPresence()
 
+    print("Conectado e autenticado com sucesso. Pronto para receber mensagens.")
+
+    # Inicia uma thread para ouvir mensagens
+    threading.Thread(target=listen_for_messages, args=(client,), daemon=True).start()
+
     while True:
-        client.Process(1)
         user_input = input("Digite a mensagem (ou 'sair' para encerrar): ")
         if user_input.lower() == 'sair':
             break
